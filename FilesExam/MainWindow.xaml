@@ -1,0 +1,36 @@
+﻿<Window x:Class="FilesExam.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FilesExam"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="400" Width="500">
+    <Grid Margin="0,0,0,-16">
+        <Button x:Name="btnStart" Content="Start" HorizontalAlignment="Left" Margin="21,218,0,0" VerticalAlignment="Top" Width="232" Height="38" Click="btnStart_Click"/>
+        <Button x:Name="btnUploadFile" Content="Upload pattern file" HorizontalAlignment="Left" Margin="21,23,0,0" VerticalAlignment="Top" Width="130" Height="46" Click="btnUploadFile_Click"/>
+        <Label Content="Also you can write necessary words to find:" HorizontalAlignment="Left" Margin="21,84,0,0" VerticalAlignment="Top" Width="239"/>
+        <TextBox x:Name="tbWords" HorizontalAlignment="Left" Margin="31,115,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="131" Height="25"/>
+        <Button x:Name="btnAddWord" Content="Add" HorizontalAlignment="Left" Margin="181,118,0,0" VerticalAlignment="Top" Width="69" Click="btnAddWord_Click"/>
+        <ListView x:Name="viewWordsList" Margin="273,22,17,0" Height="289" VerticalAlignment="Top">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Words to find:"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <ComboBox x:Name="cmbDrives" HorizontalAlignment="Left" Margin="26,156,0,0" VerticalAlignment="Top" Width="159" ItemsSource="{Binding}" Text="-- Select drive to read --" AllowDrop="False" IsEditable="True"  IsReadOnly="True" SelectionChanged="cmbDrives_SelectionChanged">
+            <ComboBoxItem Content="C drive"/>
+            <ComboBoxItem Content="D drive"/>
+        </ComboBox>
+        <StatusBar x:Name="statusBar" Margin="0,321,0,24" VerticalAlignment="Bottom">
+            <StatusBarItem Content="All files count: "/>
+            <StatusBarItem x:Name="statusAllFilesCount" Content="0" Margin="0,1,0,0"/>
+            <StatusBarItem Content="| Matched files count: "/>
+            <StatusBarItem x:Name="statusMatchedFilesCount" Content="0" Margin="0,1,0,0"/>
+
+
+        </StatusBar>
+
+    </Grid>
+</Window>
