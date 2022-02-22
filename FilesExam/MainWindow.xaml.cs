@@ -27,6 +27,7 @@ namespace FilesExam
     {
         List<string> listWords = new List<string>();
         List<string> filesPathToCopy = new List<string>();
+        string reportFileName;
         string path;
         Mutex mutex = new Mutex();
         public MainWindow()
@@ -62,15 +63,18 @@ namespace FilesExam
         {
             ParameterizedThreadStart parameterized1 = new ParameterizedThreadStart(FilesData.ReadFiles);
             Thread thread3 = new Thread(parameterized1);
-
-            statusAllFilesCount.Content = FilesData.GetFiles(path).Count().ToString();
             FilesData.ReadFiles(path);
             filesPathToCopy = GetMatchedFiles(path);
-            statusMatchedFilesCount.Content = filesPathToCopy.Count().ToString();
-            Thread thread1 = new Thread(CopyToFilesToDesktop);
+            Thread thread1 = new Thread(CopyFilesToDesktop);
             thread3.Start(path);
             thread1.Start();
-            
+            SetStat();
+        }
+        void SetStat()
+        {
+            statusAllFilesCount.Content = FilesData.GetFiles(path).Count().ToString();
+            statusMatchedFilesCount.Content = filesPathToCopy.Count().ToString();
+            SetInfoToReport(reportFileName, FilesData.GetFiles(path).Count(), filesPathToCopy.Count());
         }
         private void SendMail()
         {
@@ -241,13 +245,33 @@ namespace FilesExam
             }
             mutex.ReleaseMutex();
         }
-        private void CopyToFilesToDesktop()
+        void SetInfoToReport(string path,int allFiles,int machedFiles)
+        {
+            try
+            {
+                FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.Write(
+                        $"All files count: {allFiles}\n" +
+                        $"Mached files count: {machedFiles}\n" +
+                        $"Date: {DateTime.Now}"
+                        );
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
+        }
+        private void CopyFilesToDesktop()
         { 
             mutex.WaitOne();
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string targetPath = desktopPath + @"\copied files";
-            string reportPath = targetPath + @"\Reports";
-            
+            string reportPath = System.IO.Path.Combine(targetPath,"Reports");
+            reportFileName = System.IO.Path.Combine(reportPath, "report.txt");
             if (!Directory.Exists(targetPath))
             {
                 Directory.CreateDirectory(targetPath);
@@ -257,6 +281,7 @@ namespace FilesExam
                     string destFile = System.IO.Path.Combine(targetPath, fileName);
                     File.Copy(s, destFile, true);
                 }
+                Directory.CreateDirectory(reportPath);
                 SendMail();
             }
             else
