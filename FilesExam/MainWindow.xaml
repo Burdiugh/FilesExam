@@ -12,7 +12,7 @@
         <Label Content="Also you can write necessary words to find:" HorizontalAlignment="Left" Margin="21,84,0,0" VerticalAlignment="Top" Width="239"/>
         <TextBox x:Name="tbWords" HorizontalAlignment="Left" Margin="31,115,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="131" Height="25"/>
         <Button x:Name="btnAddWord" Content="Add" HorizontalAlignment="Left" Margin="181,118,0,0" VerticalAlignment="Top" Width="69" Click="btnAddWord_Click"/>
-        <ListView x:Name="viewWordsList" Margin="273,22,17,0" Height="289" VerticalAlignment="Top">
+        <ListView x:Name="viewWordsList" Margin="273,22,17,0" Height="289" VerticalAlignment="Top" MouseDoubleClick="viewWordsList_MouseDoubleClick">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Words to find:"/>
@@ -28,6 +28,8 @@
             <StatusBarItem x:Name="statusAllFilesCount" Content="0" Margin="0,1,0,0"/>
             <StatusBarItem Content="| Matched files count: "/>
             <StatusBarItem x:Name="statusMatchedFilesCount" Content="0" Margin="0,1,0,0"/>
+            <StatusBarItem Content="| Changed words count: "/>
+            <StatusBarItem x:Name="statusChangedWordsCount" Content="0" Margin="0,1,0,0"/>
 
 
         </StatusBar>

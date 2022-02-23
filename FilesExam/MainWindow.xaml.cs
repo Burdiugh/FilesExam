@@ -31,6 +31,7 @@ namespace FilesExam
         string reportFileName;
         string path;
         Mutex mutex = new Mutex();
+        int wordsCount = 0;
         public MainWindow()
         {
 
@@ -62,23 +63,6 @@ namespace FilesExam
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            //string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            //path = path + @"\5bad.txt";
-            //using (StreamReader sr = new StreamReader(path))
-            //{
-            //    string[] words = sr.ReadToEnd().ToLower().Split(new char[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-
-            //    for (int i = 0; i < listWords.Count; i++)
-            //    {
-            //        foreach (var word in words)
-            //        {
-            //            if (word==listWords[i])
-            //            {
-            //                MessageBox.Show(word);
-            //            }
-            //        }
-            //    }
-            //}
             ParameterizedThreadStart parameterized1 = new ParameterizedThreadStart(FilesData.ReadFiles);
             Thread thread3 = new Thread(parameterized1);
             FilesData.ReadFiles(path);
@@ -92,6 +76,7 @@ namespace FilesExam
         {
             statusAllFilesCount.Content = FilesData.GetFiles(path).Count().ToString();
             statusMatchedFilesCount.Content = filesPathToCopy.Count().ToString();
+            statusChangedWordsCount.Content = wordsCount;
             SetInfoToReport(reportFileName, FilesData.GetFiles(path).Count(), filesPathToCopy.Count());
         }
         private void SendMail()
@@ -110,7 +95,7 @@ namespace FilesExam
                 attachment = new Attachment(file);
                 mail.Attachments.Add(attachment);
             }
-            //SmtpServer.UseDefaultCredentials = true;
+           
             SmtpServer.Port = 587;
             SmtpServer.Credentials = new System.Net.NetworkCredential("justfortestmyexam@gmail.com", "Exforfun12345");
             SmtpServer.EnableSsl = true;
@@ -125,32 +110,7 @@ namespace FilesExam
             }
 
 
-            //using (MailMessage mail = new MailMessage())
-            //{
-            //    mail.From = new MailAddress("justfortestmyexam@gmail.com");
-            //    mail.To.Add("justfortestmyexam@gmail.com");
-            //    mail.Subject = "Hello World";
-            //    mail.Body = "<h1>Hello</h1>";
-            //    mail.IsBodyHtml = true;
-            //    //foreach (var file in filesPathToCopy)
-            //    //{
-            //    //    mail.Attachments.Add(new Attachment(file));
-            //    //}
-            //    using (SmtpClient smtp = new SmtpClient("smtp.gmail.com", 465))
-            //    {
-            //        //smtp.UseDefaultCredentials = true;
-            //        smtp.Credentials = new NetworkCredential("justfortestmyexam@gmail.com", "Exforfun12345");
-            //        smtp.EnableSsl = true;
-            //        try
-            //        {
-            //            smtp.Send(mail);
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            MessageBox.Show(ex.Message);
-            //        }
-            //    }
-            //}
+            
             mutex.ReleaseMutex();
         }
         private void btnUploadFile_Click(object sender, RoutedEventArgs e)
@@ -278,6 +238,7 @@ namespace FilesExam
                     sw.Write(
                         $"All files count: {allFiles}\n" +
                         $"Mached files count: {machedFiles}\n" +
+                        $"Words was changed: {wordsCount}\n" +
                         $"{new string('-', 50)}"
                         );
                     foreach (var file in filesPathToCopy)
@@ -302,7 +263,11 @@ namespace FilesExam
             }
             for (int i = 0; i < listWords.Count; i++)
             {
-                line = Regex.Replace(line, listWords[i], "******");
+                if (line.Contains(listWords[i]))
+                {
+                    line = Regex.Replace(line, listWords[i], "******");
+                    wordsCount++;
+                }
             }
             using (StreamWriter sw = new StreamWriter(path))
             {
@@ -334,7 +299,13 @@ namespace FilesExam
 
                 }
                 Directory.CreateDirectory(reportPath);
-                SendMail();
+                try
+                {
+                    SendMail();
+                }
+                catch
+                {
+                }
             }
             else
             {
@@ -351,11 +322,24 @@ namespace FilesExam
                     {
                     }
                 }
-                SendMail();
+                try
+                {
+                    SendMail();
+                }
+                catch
+                {
+                }
             }
             mutex.ReleaseMutex();
         }
 
-
+        private void viewWordsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (viewWordsList.SelectedIndex!=-1)
+            {
+                listWords.Remove(viewWordsList.SelectedItem.ToString());
+                Update();
+            }
+        }
     }
 }
