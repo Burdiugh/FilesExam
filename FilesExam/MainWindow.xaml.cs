@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -61,6 +62,23 @@ namespace FilesExam
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
+            //string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            //path = path + @"\5bad.txt";
+            //using (StreamReader sr = new StreamReader(path))
+            //{
+            //    string[] words = sr.ReadToEnd().ToLower().Split(new char[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+
+            //    for (int i = 0; i < listWords.Count; i++)
+            //    {
+            //        foreach (var word in words)
+            //        {
+            //            if (word==listWords[i])
+            //            {
+            //                MessageBox.Show(word);
+            //            }
+            //        }
+            //    }
+            //}
             ParameterizedThreadStart parameterized1 = new ParameterizedThreadStart(FilesData.ReadFiles);
             Thread thread3 = new Thread(parameterized1);
             FilesData.ReadFiles(path);
@@ -148,7 +166,7 @@ namespace FilesExam
                     var fileStream = openFileDialog.OpenFile();
                     using (StreamReader reader = new StreamReader(fileStream))
                     {
-                        string[] words = reader.ReadToEnd().Split(new char[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] words = reader.ReadToEnd().Split(new char[] { ' ', ',', '.', '!', '?','\r','\n' }, StringSplitOptions.RemoveEmptyEntries);
                         for (int i = 0; i < words.Length; i++)
                         {
                             listWords.Add(words[i].ToLower());
@@ -201,7 +219,7 @@ namespace FilesExam
                     FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
                     using (StreamReader sr = new StreamReader(fs))
                     {
-                        string[] words = sr.ReadToEnd().ToLower().Split(new char[] { ' ', '.', ',', '!', '?', ':', '\n', '\r' },StringSplitOptions.RemoveEmptyEntries);
+                        string[] words = sr.ReadToEnd().ToLower().Split(new char[] { ' ', '.', ',', '!', '?', ':', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
                         if (words != null)
                         {
                             for (int i = 0; i < listWords.Count; i++)
@@ -275,6 +293,22 @@ namespace FilesExam
             }
 
         }
+        void ReplaceSwearwords(string path)
+        {
+            string line;
+            using (StreamReader sr = new StreamReader(path))
+            {
+                line = sr.ReadToEnd().ToLower();
+            }
+            for (int i = 0; i < listWords.Count; i++)
+            {
+                line = Regex.Replace(line, listWords[i], "******");
+            }
+            using (StreamWriter sw = new StreamWriter(path))
+            {
+                sw.Write(line);
+            }
+        }
         private void CopyFilesToDesktop()
         {
             mutex.WaitOne();
@@ -292,10 +326,12 @@ namespace FilesExam
                     try
                     {
                         File.Copy(s, destFile, true);
+                        ReplaceSwearwords(destFile);
                     }
                     catch
                     {
                     }
+
                 }
                 Directory.CreateDirectory(reportPath);
                 SendMail();
@@ -309,6 +345,7 @@ namespace FilesExam
                     try
                     {
                         File.Copy(s, destFile, true);
+                        ReplaceSwearwords(destFile);
                     }
                     catch
                     {
