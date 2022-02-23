@@ -22,7 +22,7 @@ using System.Windows.Shapes;
 
 namespace FilesExam
 {
-   
+
     public partial class MainWindow : Window
     {
         List<string> listWords = new List<string>();
@@ -35,19 +35,19 @@ namespace FilesExam
 
             if (IsRunningProcess(Process.GetCurrentProcess()))
             {
-                MessageBox.Show("This process is already running!","Error",MessageBoxButton.OK,MessageBoxImage.Error);
+                MessageBox.Show("This process is already running!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 this.Close();
             }
             else
             {
                 InitializeComponent();
                 btnStart.IsEnabled = false;
-            }   
+            }
         }
         bool IsRunningProcess(Process procces)
         {
             Process[] procceses = Process.GetProcessesByName(procces.ProcessName);
-            if (procceses.Count()>1)
+            if (procceses.Count() > 1)
             {
                 return true;
             }
@@ -57,7 +57,7 @@ namespace FilesExam
         {
             viewWordsList.ItemsSource = null;
             viewWordsList.ItemsSource = listWords;
-            
+
         }
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
@@ -137,10 +137,10 @@ namespace FilesExam
         }
         private void btnUploadFile_Click(object sender, RoutedEventArgs e)
         {
-           OpenFileDialog openFileDialog = new OpenFileDialog();
-           openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-           openFileDialog.ShowDialog();
-           string filePath = openFileDialog.FileName;
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+            openFileDialog.ShowDialog();
+            string filePath = openFileDialog.FileName;
             if (filePath != null)
             {
                 try
@@ -148,7 +148,7 @@ namespace FilesExam
                     var fileStream = openFileDialog.OpenFile();
                     using (StreamReader reader = new StreamReader(fileStream))
                     {
-                        string[] words = reader.ReadToEnd().Split(' ');
+                        string[] words = reader.ReadToEnd().Split(new char[] { ' ', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
                         for (int i = 0; i < words.Length; i++)
                         {
                             listWords.Add(words[i].ToLower());
@@ -156,9 +156,9 @@ namespace FilesExam
                         }
                     }
                 }
-                catch 
+                catch
                 {
-                   
+
                 }
             }
         }
@@ -172,15 +172,16 @@ namespace FilesExam
             else
             {
                 listWords.Add(word.ToLower());
+                tbWords.Text = "";
                 Update();
             }
         }
         private void cmbDrives_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cmbDrives!=null)
+            if (cmbDrives != null)
             {
                 btnStart.IsEnabled = true;
-                if (cmbDrives.SelectedIndex==0)
+                if (cmbDrives.SelectedIndex == 0)
                 {
                     path = @"C:\";
                 }
@@ -200,17 +201,21 @@ namespace FilesExam
                     FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
                     using (StreamReader sr = new StreamReader(fs))
                     {
-                        string line = sr.ReadToEnd().ToLower();
-                        if (line != null)
+                        string[] words = sr.ReadToEnd().ToLower().Split(new char[] { ' ', '.', ',', '!', '?', ':', '\n', '\r' },StringSplitOptions.RemoveEmptyEntries);
+                        if (words != null)
                         {
                             for (int i = 0; i < listWords.Count; i++)
                             {
-                                if (line.Contains(listWords[i].ToLower()))
+                                foreach (var word in words)
                                 {
-                                    matchedFilesPath.Add(file);
-                                    break;
+                                    if (word == listWords[i].ToLower())
+                                    {
+                                        matchedFilesPath.Add(file);
+                                        break;
+                                    }
                                 }
                             }
+
                         }
                     }
                 }
@@ -245,7 +250,7 @@ namespace FilesExam
             }
             mutex.ReleaseMutex();
         }
-        void SetInfoToReport(string path,int allFiles,int machedFiles)
+        void SetInfoToReport(string path, int allFiles, int machedFiles)
         {
             try
             {
@@ -255,22 +260,27 @@ namespace FilesExam
                     sw.Write(
                         $"All files count: {allFiles}\n" +
                         $"Mached files count: {machedFiles}\n" +
-                        $"Date: {DateTime.Now}"
+                        $"{new string('-', 50)}"
                         );
+                    foreach (var file in filesPathToCopy)
+                    {
+                        sw.Write($"\n{file}\n");
+                    }
+                    sw.Write($"{new string('-', 50)}\nDate: {DateTime.Now}");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-            
+
         }
         private void CopyFilesToDesktop()
-        { 
+        {
             mutex.WaitOne();
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string targetPath = desktopPath + @"\copied files";
-            string reportPath = System.IO.Path.Combine(targetPath,"Reports");
+            string reportPath = System.IO.Path.Combine(targetPath, "Reports");
             reportFileName = System.IO.Path.Combine(reportPath, "report.txt");
             if (!Directory.Exists(targetPath))
             {
@@ -279,7 +289,13 @@ namespace FilesExam
                 {
                     string fileName = System.IO.Path.GetFileName(s);
                     string destFile = System.IO.Path.Combine(targetPath, fileName);
-                    File.Copy(s, destFile, true);
+                    try
+                    {
+                        File.Copy(s, destFile, true);
+                    }
+                    catch
+                    {
+                    }
                 }
                 Directory.CreateDirectory(reportPath);
                 SendMail();
@@ -290,7 +306,13 @@ namespace FilesExam
                 {
                     string fileName = System.IO.Path.GetFileName(s);
                     string destFile = System.IO.Path.Combine(targetPath, fileName);
-                    File.Copy(s, destFile, true);
+                    try
+                    {
+                        File.Copy(s, destFile, true);
+                    }
+                    catch
+                    {
+                    }
                 }
                 SendMail();
             }
