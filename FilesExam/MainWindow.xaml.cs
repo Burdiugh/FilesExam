@@ -28,6 +28,8 @@ namespace FilesExam
     {
         List<string> listWords = new List<string>();
         List<string> filesPathToCopy = new List<string>();
+        List<string> foundSwearwords = new List<string>();
+
         string reportFileName;
         string path;
         Mutex mutex = new Mutex();
@@ -45,6 +47,23 @@ namespace FilesExam
                 InitializeComponent();
                 btnStart.IsEnabled = false;
             }
+            // cmd mode...
+            this.Hide();
+            InitListWordsForCmd();
+            Processing();
+            this.Close();
+        }
+        void InitListWordsForCmd()
+        {
+            listWords.Add("Fuck");
+            listWords.Add("Sucker");
+            listWords.Add("Bastard");
+            listWords.Add("Shit");
+            listWords.Add("Wanker");
+            for (int i = 0; i < listWords.Count; i++)
+            {
+                listWords[i] = listWords[i].ToLower();
+            }
         }
         bool IsRunningProcess(Process procces)
         {
@@ -61,8 +80,9 @@ namespace FilesExam
             viewWordsList.ItemsSource = listWords;
 
         }
-        private void btnStart_Click(object sender, RoutedEventArgs e)
+        void Processing()
         {
+            path=@"D:\";
             ParameterizedThreadStart parameterized1 = new ParameterizedThreadStart(FilesData.ReadFiles);
             Thread thread3 = new Thread(parameterized1);
             FilesData.ReadFiles(path);
@@ -72,12 +92,16 @@ namespace FilesExam
             thread1.Start();
             SetStat();
         }
+        private void btnStart_Click(object sender, RoutedEventArgs e)
+        {
+            Processing();
+        }
         void SetStat()
         {
             statusAllFilesCount.Content = FilesData.GetFiles(path).Count().ToString();
             statusMatchedFilesCount.Content = filesPathToCopy.Count().ToString();
             statusChangedWordsCount.Content = wordsCount;
-            SetInfoToReport(reportFileName, FilesData.GetFiles(path).Count(), filesPathToCopy.Count());
+            SetInfoToReport(reportFileName, FilesData.GetFiles(path).Count(), filesPathToCopy.Count(),wordsCount,InfoSwearword()); 
         }
         private void SendMail()
         {
@@ -228,8 +252,13 @@ namespace FilesExam
             }
             mutex.ReleaseMutex();
         }
-        void SetInfoToReport(string path, int allFiles, int machedFiles)
+        void SetInfoToReport(string path, int allFiles, int machedFiles,int wordsCount,string wordsInfo)
         {
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach (var word in listWords)
+            {
+                stringBuilder.Append(word + "\n");
+            }
             try
             {
                 FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
@@ -238,7 +267,9 @@ namespace FilesExam
                     sw.Write(
                         $"All files count: {allFiles}\n" +
                         $"Mached files count: {machedFiles}\n" +
-                        $"Words was changed: {wordsCount}\n" +
+                        $"Words which we tried to find:\n"+ stringBuilder+"\n"+
+                        $"Words were changed: {wordsCount}\n" +
+                        $"More info about words were found:\n{new string('-', 50)}{wordsInfo}" +
                         $"{new string('-', 50)}"
                         );
                     foreach (var file in filesPathToCopy)
@@ -265,6 +296,7 @@ namespace FilesExam
             {
                 if (line.Contains(listWords[i]))
                 {
+                    foundSwearwords.Add(listWords[i]);
                     line = Regex.Replace(line, listWords[i], "******");
                     wordsCount++;
                 }
@@ -332,7 +364,6 @@ namespace FilesExam
             }
             mutex.ReleaseMutex();
         }
-
         private void viewWordsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (viewWordsList.SelectedIndex!=-1)
@@ -340,6 +371,19 @@ namespace FilesExam
                 listWords.Remove(viewWordsList.SelectedItem.ToString());
                 Update();
             }
+        }
+        string InfoSwearword()
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            var q = foundSwearwords.GroupBy(x => x)
+       .Select(g => new { Value = g.Key, Count = g.Count() })
+       .OrderByDescending(x => x.Count);
+
+            foreach (var x in q)
+            {
+                stringBuilder.Append("\n Word: " + x.Value + " Count: " + x.Count+"\n");
+            }
+            return stringBuilder.ToString();
         }
     }
 }
